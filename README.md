@@ -1,2 +1,0 @@
-# SuperCold
-game
