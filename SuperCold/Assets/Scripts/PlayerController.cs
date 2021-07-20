@@ -6,50 +6,73 @@ public class PlayerController : MonoBehaviour
 {
     // Start is called before the first frame update
     public float moveSpeed = 10f;
-    public Transform movePoint;
-    public float gridWidth = 0.5f ;
+    public int isStill;
+    public float moveDistance = 10f;//闪现距离
     public Animator animator;
-    
+
+    private Rigidbody2D rb;
+
+    Vector2 movement;
+
     void Start()
     {
-        movePoint.parent = null;
+        rb = GetComponent<Rigidbody2D>();
     }
 
     // Update is called once per frame
-    void Update()
+    private void Update()
     {
-        //很奇怪，为什么playmovepoint为什么直接移动到了（1000，500）的位置。只能靠moveTowards控制步长了
-        //存在两个问题，一是movePoint移动得太远，而是摁一下space移动一下，如果步长舍得太短
-        //使player向MovePonit的位置移动
-
-        if (Input.GetKeyDown(KeyCode.Space))
+        movement.x = Input.GetAxisRaw("Horizontal");
+        movement.y = Input.GetAxisRaw("Vertical");
+        if (movement.x == 0 && movement.y == 0)
         {
-            transform.position = Vector3.MoveTowards(transform.position, movePoint.position, 0.52f);//还是搞不清楚这个函数，大概是用来从一个位置移动到另一个位置的，但是不知道最后一个空应该填什么
+            isStill = 1;
         }
-
-        if (Input.GetKeyDown(KeyCode.A))
+        else
         {
-            animator.SetBool("A",true );animator.SetBool("W", false); animator.SetBool("S", false); animator.SetBool("D", false);
-            movePoint.position = new Vector3(-gridWidth, -gridWidth / 2, 0f) + transform.position;
+            isStill = 0;
         }
+    }
 
-        if (Input.GetKeyDown(KeyCode.D))
+    void FixedUpdate()
+    {
+        rb.MovePosition(rb.position + movement * moveSpeed * Time.fixedDeltaTime);
+
+        if (movement.x < 0 && movement.y < 0)
+        {
+            animator.SetBool("A", true); animator.SetBool("W", false); animator.SetBool("S", false); animator.SetBool("D", false);
+        }
+        else if (movement.x > 0 && movement.y > 0)
         {
             animator.SetBool("D", true); animator.SetBool("W", false); animator.SetBool("S", false); animator.SetBool("A", false);
-            movePoint.position = new Vector3(gridWidth, gridWidth / 2, 0f) + transform.position;
         }
-        if (Input.GetKeyDown(KeyCode.W))
+        else if (movement.x < 0 && movement.y > 0)
         {
             animator.SetBool("W", true); animator.SetBool("A", false); animator.SetBool("S", false); animator.SetBool("D", false);
-            movePoint.position = new Vector3(-gridWidth, gridWidth / 2, 0f) + transform.position;
         }
-        if (Input.GetKeyDown(KeyCode.S))
+        else if (movement.x > 0 && movement.y < 0)
         {
             animator.SetBool("S", true); animator.SetBool("W", false); animator.SetBool("A", false); animator.SetBool("D", false);
-            movePoint.position = new Vector3(gridWidth, -gridWidth / 2, 0f) + transform.position;
         }
-
+        else if (movement.x > 0 && movement.y == 0)
+        {
+            animator.SetBool("S", true); animator.SetBool("W", false); animator.SetBool("A", false); animator.SetBool("D", false);
+        }
+        else if (movement.x < 0 && movement.y == 0)
+        {
+            animator.SetBool("A", true); animator.SetBool("W", false); animator.SetBool("S", false); animator.SetBool("D", false);
+        }
         //四个方向的面向
-
+        Flash();
+    }
+    private void Flash()
+    {
+        if (Input.GetKey(KeyCode.Space))
+        {
+            Vector3 player = Camera.main.WorldToScreenPoint(transform.position);//获得鼠标位置
+            Vector2 direction = Input.mousePosition - player;//获得方向
+            direction = direction.normalized;//归一化
+            rb.MovePosition(rb.position + direction * moveDistance);
+        }
     }
 }
